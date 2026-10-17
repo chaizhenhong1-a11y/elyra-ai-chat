@@ -94,6 +94,7 @@ export function CharacterConversation({
     let cancelled=false;
     const audio=playbackRef.current;
     const queue:string[]=[];
+    const downloadedUrls:string[]=[];
     let playing=false;
     let playbackStarted=false;
     let generationFinished=false;
@@ -115,12 +116,20 @@ export function CharacterConversation({
         const result=await response.json() as {audioUrl?:string|null};
         if(cancelled)break;
         if(!result.audioUrl)break;
-        queue.push(`${voiceApi().replace(/\/api\/v1$/,"")}${result.audioUrl}`);
+        const audioUrl=`${voiceApi().replace(/\/api\/v1$/,"")}${result.audioUrl}`;
+        if(voiceConfig.provider==="kokoro"){
+          // Fetch before queueing so switching segments never starts a network load.
+          const file=await fetch(audioUrl,{signal:abort.signal});
+          if(!file.ok)throw new Error("Speech download failed");
+          const blob=await file.blob();
+          if(cancelled)break;
+          const local=URL.createObjectURL(blob);downloadedUrls.push(local);queue.push(local);
+        }else queue.push(audioUrl);
         pump();
       }
       generationFinished=true;pump();
     })().catch(()=>{if(!cancelled)setSpeechFailed(true);});
-    return()=>{cancelled=true;abort.abort();if(audio){audio.pause();audio.onended=null;audio.removeAttribute("src");}queue.length=0;};
+    return()=>{cancelled=true;abort.abort();if(audio){audio.pause();audio.onended=null;audio.removeAttribute("src");}queue.length=0;downloadedUrls.forEach(url=>URL.revokeObjectURL(url));};
   },[speechText,readAloud,sending,voiceConfig.provider]);
   const groupedLanguages=languagePickerGroups(languageQuery,locale);
 

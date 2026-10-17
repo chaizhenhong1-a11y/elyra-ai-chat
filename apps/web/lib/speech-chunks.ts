@@ -4,6 +4,20 @@ export function speechChunks(text:string,uniform=false):string[]{
   const chunks:string[]=[];
   let rest=text;
   while(rest.length){
+    if(uniform){
+      // A fresh synthesis call resets prosody: keep a whole sentence together,
+      // including English sentences longer than a few words.
+      const hardLimit=400;
+      const boundary=rest.slice(0,hardLimit).match(/[。！？!?\n]|\.(?=\s|$)/);
+      let cut=boundary?boundary.index!+boundary[0].length:Math.min(rest.length,hardLimit);
+      if(!boundary&&rest.length>hardLimit){
+        const window=rest.slice(0,hardLimit);
+        const breaks=[...window.matchAll(/[；;，,：:]/g)];
+        const space=window.lastIndexOf(' ');
+        cut=breaks.length?breaks[breaks.length-1].index!+1:space>0?space+1:hardLimit;
+      }
+      chunks.push(rest.slice(0,cut));rest=rest.slice(cut);continue;
+    }
     const limit=uniform?40:chunks.length?100:40;
     const hardLimit=uniform?60:chunks.length?180:100;
     if(rest.length<=limit){chunks.push(rest);break;}

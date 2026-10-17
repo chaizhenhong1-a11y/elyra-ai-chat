@@ -22,6 +22,7 @@ async function main(){
  dom.window.HTMLMediaElement.prototype.play=function(){plays++;return blocked?Promise.reject(new Error('autoplay blocked')):Promise.resolve();};
  dom.window.HTMLMediaElement.prototype.pause=function(){};
  global.fetch=async(url,options)=>{
+  if(url.includes('/uploads/'))return {ok:true,blob:async()=>new Blob(['test'],{type:'audio/wav'})};
   if(url.endsWith('/voice/synthesize')){spoken.push(JSON.parse(options.body).text);if(holdSpeech)return new Promise(resolve=>pendingSpeech.push(resolve));return {ok:true,json:async()=>({audioUrl:'/api/v1/uploads/test.wav'})};}
   return {ok:true,json:async()=>({enabled:true,autoSpeak:true,provider,effectiveSupportedLanguages:['zh']})};
  };
@@ -47,7 +48,10 @@ async function main(){
  assert.equal(speechChunks(english).join(''),english);
  assert.equal(speechChunks('字'.repeat(400)).join(''),'字'.repeat(400));
  const uniform=speechChunks('字'.repeat(400),true);
- assert.equal(uniform.join(''),'字'.repeat(400));assert.ok(uniform.every(chunk=>chunk.length<=60));
+ assert.equal(uniform.join(''),'字'.repeat(400));assert.ok(uniform.every(chunk=>chunk.length<=400));
+ const fullEnglish='You do not have to convince him to feel differently, and it is okay to give yourself some space. What happened next?';
+ assert.equal(speechChunks(fullEnglish,true)[0],'You do not have to convince him to feel differently, and it is okay to give yourself some space.');
+ assert.equal(speechChunks(fullEnglish,true).join(''),fullEnglish);
  await React.act(async()=>root.unmount());
  window.localStorage.setItem('elyra.voice.readAloud','false');
  const second=createRoot(host);await React.act(async()=>second.render(render()));
@@ -70,6 +74,7 @@ async function main(){
  assert.ok(spoken.length-beforeBuffered>1,'fast FP32 Kokoro pipelines speech without waiting for the whole reply');
  assert.equal(spoken.slice(beforeBuffered).join(''),messages['zh-CN'].openingMessage);
  assert.equal(host.querySelector('audio[controls]'),null);
+ assert.match(host.querySelector('audio').src,/^blob:/,'Kokoro plays a downloaded local buffer');
  await React.act(async()=>third.unmount());
  dom.window.close();console.log('PASS short first chunk, lossless splitting, sequential playback, hidden player, autoplay retry, Admin default and explicit off.');
 }
