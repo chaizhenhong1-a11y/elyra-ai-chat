@@ -1,0 +1,37 @@
+{
+  "schema": "elyra.outfit.validation.v1",
+  "compactFile": "elyra-stanley-outfit-01.compact.glb",
+  "compactBytes": 1469880,
+  "clothPrimitives": 4,
+  "structuralValid": true,
+  "errors": [],
+  "skinCount": 3,
+  "jointCountMax": 133,
+  "bodyMaskAnalysis": {
+    "baseFile": "elyra-stanley.vrm",
+    "baseJointNamesFound": 113,
+    "candidateCoveredBones": [
+      "J_Bip_C_Hips",
+      "J_Bip_C_Spine",
+      "J_Bip_C_Chest",
+      "J_Bip_C_UpperChest",
+      "J_Bip_L_UpperArm",
+      "J_Bip_L_LowerArm",
+      "J_Bip_R_UpperArm",
+      "J_Bip_R_LowerArm",
+      "J_Bip_L_UpperLeg",
+      "J_Bip_L_LowerLeg",
+      "J_Bip_L_Foot",
+      "J_Bip_R_UpperLeg",
+      "J_Bip_R_LowerLeg",
+      "J_Bip_R_Foot"
+    ],
+    "preserve": [
+      "head",
+      "neck",
+      "leftHand",
+      "rightHand"
+    ],
+    "status": "analysis-only; no runtime mask applied"
+  }
+}

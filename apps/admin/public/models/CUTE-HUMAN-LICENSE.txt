@@ -1,0 +1,12 @@
+Elyra Cute Human V1 base asset
+
+Source model: Quaternius Universal Base Characters (Standard)
+License: Creative Commons CC0 1.0 Universal / public domain
+Packaged GLB source used by the fetch script:
+https://github.com/programasweights/avatar/blob/main/public/assets/character.glb
+
+The source repository documents the bundled character as Quaternius Superhero Male,
+preserving its mesh, skin weights and skeleton, under CC0 1.0.
+
+Elyra uses this as a rigged stylized base and applies cute/chibi proportions at runtime.
+It is not the final face-morph production mesh.

@@ -1,0 +1,7 @@
+idle_loop.vrma
+Source: pixiv/ChatVRM public/idle_loop.vrma
+Repository: https://github.com/pixiv/ChatVRM
+License: MIT
+Copyright (c) 2023 pixiv Inc.
+
+The full MIT license for ChatVRM is available in the upstream repository LICENSE file.

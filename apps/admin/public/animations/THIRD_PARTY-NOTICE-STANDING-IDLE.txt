@@ -1,0 +1,5 @@
+standing_idle.vrma
+Source repository: SkyeShark/claudes-body
+Source path: assets/animations/Standing Idle.vrma
+Upstream repository: https://github.com/SkyeShark/claudes-body
+The upstream project documents this clip as a standing idle VRMA and credits its animation assets in its README. Review upstream asset terms before redistribution in a production release.

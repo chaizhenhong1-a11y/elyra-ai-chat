@@ -1,0 +1,58 @@
+require('./test-i18n.cjs');
+const assert=require('node:assert/strict');
+const path=require('node:path');
+const Module=require('node:module');
+const React=require('react');
+const {JSDOM}=require('jsdom');
+const {createRoot}=require('react-dom/client');
+const resolve=Module._resolveFilename;
+Module._resolveFilename=function(request,parent,...rest){return resolve.call(this,request.startsWith('@/')?path.join(__dirname,'..',request.slice(2)):request,parent,...rest);};
+const stage=require.resolve('../components/character-stage.tsx');
+require.cache[stage]={id:stage,filename:stage,loaded:true,exports:{CharacterStage:()=>null,DesktopGlobalCharacterTools:()=>null}};
+const {I18nProvider}=require('../lib/i18n/provider.tsx');
+const {CharacterConversation}=require('../components/character-conversation.tsx');
+const {speechChunks}=require('../lib/speech-chunks.ts');
+const {messages}=require('../lib/i18n/messages.ts');
+messages['zh-CN'].openingMessage+='我们可以慢慢聊，说说你今天遇到的事情。我在这里听你说。';
+async function main(){
+ const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost:3000'});
+ global.window=dom.window;global.document=dom.window.document;global.IS_REACT_ACT_ENVIRONMENT=true;
+ Object.defineProperty(global,'navigator',{configurable:true,value:dom.window.navigator});
+ let plays=0;let blocked=true;const spoken=[];
+ dom.window.HTMLMediaElement.prototype.play=function(){plays++;return blocked?Promise.reject(new Error('autoplay blocked')):Promise.resolve();};
+ dom.window.HTMLMediaElement.prototype.pause=function(){};
+ global.fetch=async(url,options)=>{
+  if(url.endsWith('/voice/synthesize')){spoken.push(JSON.parse(options.body).text);return {ok:true,json:async()=>({audioUrl:'/api/v1/uploads/test.wav'})};}
+  return {ok:true,json:async()=>({enabled:true,autoSpeak:true,effectiveSupportedLanguages:['zh']})};
+ };
+ window.localStorage.setItem('elyra.uiLanguage','zh-CN');
+ const host=document.getElementById('root');const root=createRoot(host);
+ const render=()=>React.createElement(I18nProvider,null,React.createElement(CharacterConversation,{config:{chatName:'Stanley',inputPlaceholder:'Message…'},modelKey:'elyra-stanley'}));
+ const click=async node=>React.act(async()=>node.dispatchEvent(new window.MouseEvent('click',{bubbles:true})));
+ await React.act(async()=>root.render(render()));
+ await click(host.querySelector('.desktopStartChat'));
+ assert.ok(spoken.length>1);assert.match(spoken[0],/你好/);assert.ok(spoken[0].length<=100);
+ assert.equal(plays,1);assert.equal(host.querySelector('audio[controls]'),null,'native playback bar is hidden');
+ assert.ok(host.querySelector('audio[hidden]'));
+ const resume=host.querySelector('.companionSpeech button');assert.ok(resume,'small retry button on autoplay rejection');
+ blocked=false;await click(resume);assert.equal(plays,2);
+ await React.act(async()=>host.querySelector('audio').dispatchEvent(new window.Event('ended')));
+ assert.equal(plays,3,'next sentence plays in order');
+ const generated=spoken.length;
+ const longText='这是第一句中文回复，后面还有需要朗读的内容。'.repeat(12);
+ const chunks=speechChunks(longText);assert.equal(chunks.join(''),longText);assert.ok(chunks[0].length<=100);assert.ok(chunks.every(chunk=>chunk.length<=180));
+ assert.equal(chunks[0],'这是第一句中文回复，后面还有需要朗读的内容。','complete sentence wins over the first comma');
+ const english='I understand how you feel. We can take this slowly and work through it together. '.repeat(3);
+ assert.equal(speechChunks(english)[0],'I understand how you feel.');
+ assert.equal(speechChunks(english).join(''),english);
+ assert.equal(speechChunks('字'.repeat(400)).join(''),'字'.repeat(400));
+ await React.act(async()=>root.unmount());
+ window.localStorage.setItem('elyra.voice.readAloud','false');
+ const second=createRoot(host);await React.act(async()=>second.render(render()));
+ await click(host.querySelector('.desktopStartChat'));
+ assert.equal(spoken.length,generated,'explicit off remains off despite Admin enabled');
+ assert.equal(host.querySelector('audio').getAttribute('src'),null);
+ await React.act(async()=>second.unmount());
+ dom.window.close();console.log('PASS short first chunk, lossless splitting, sequential playback, hidden player, autoplay retry, Admin default and explicit off.');
+}
+main().catch(error=>{console.error(error);process.exitCode=1;});

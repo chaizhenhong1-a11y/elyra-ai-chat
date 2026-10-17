@@ -1,0 +1,2 @@
+# Whisper 20231117 setup.py imports pkg_resources.
+setuptools<81

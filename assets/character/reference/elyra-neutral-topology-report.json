@@ -1,0 +1,32 @@
+{
+  "source": "C:\\flutter project\\elyra\\.elyra_cache\\blender-human-base-meshes\\v1.4.1\\human-base-meshes-bundle-v1.4.1\\human_base_meshes_bundle.blend",
+  "license": "CC0-1.0",
+  "provider": "Blender Studio",
+  "selectedCollections": [
+    "Body Female - Stylized"
+  ],
+  "meshCount": 3,
+  "meshes": [
+    {
+      "name": "GEO-body_female_stylized",
+      "vertices": 12502,
+      "edges": 25000,
+      "polygons": 12500,
+      "shapeKeys": []
+    },
+    {
+      "name": "GEO-body_female_stylized.eye.L",
+      "vertices": 802,
+      "edges": 1632,
+      "polygons": 832,
+      "shapeKeys": []
+    },
+    {
+      "name": "GEO-body_female_stylized.eye.R",
+      "vertices": 802,
+      "edges": 1632,
+      "polygons": 832,
+      "shapeKeys": []
+    }
+  ]
+}

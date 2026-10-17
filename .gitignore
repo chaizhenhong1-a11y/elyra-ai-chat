@@ -1,0 +1,22 @@
+node_modules
+.next
+out
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+
+services/api/uploads/
+
+# Local state, uploads, generated artifacts and model/runtime downloads
+.elyra/
+.elyra_cache/
+uploads/
+**/uploads/
+**/dist/
+**/__pycache__/
+**/.venv/
+*.log
+*.zip
+*.wav
+packages/shared/runtime-*.json

@@ -1,0 +1,16 @@
+{
+  "name": "elyra",
+  "version": "0.2.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w @elyra/web",
+    "dev:admin": "npm run dev -w @elyra/admin",
+    "build": "npm run build -w @elyra/web && npm run build -w @elyra/admin && npm run build -w @elyra/api",
+    "typecheck": "npm run typecheck -w @elyra/web && npm run typecheck -w @elyra/admin && npm run typecheck -w @elyra/api",
+    "dev:api": "npm run dev -w @elyra/api"
+  }
+}

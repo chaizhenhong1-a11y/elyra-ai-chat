@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AppearanceSettings {
+  id                 String   @id @default("default")
+  backgroundType     String   @default("gradient") @map("background_type")
+  backgroundImageUrl String?  @map("background_image_url")
+  backgroundOverlay  Float    @default(0.55) @map("background_overlay")
+  backgroundBlur     Int      @default(0) @map("background_blur")
+  glassOpacity       Float    @default(0.14) @map("glass_opacity")
+  accentColor        String   @default("#8B7CFF") @map("accent_color")
+  backgroundPosition String   @default("center") @map("background_position")
+  backgroundFit      String   @default("cover") @map("background_fit")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("appearance_settings")
+}
+
+
+model ReplyRule {
+  id        String   @id @default(cuid())
+  name      String
+  triggers  String[]
+  matchMode String   @default("contains") @map("match_mode")
+  reply     String
+  priority  Int      @default(100)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([enabled, priority])
+  @@map("reply_rules")
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  title     String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  messages  Message[]
+
+  @@index([updatedAt])
+  @@map("conversations")
+}
+
+model Message {
+  id            String       @id @default(cuid())
+  conversationId String      @map("conversation_id")
+  role          String
+  content       String
+  matchedRuleId String?      @map("matched_rule_id")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  conversation  Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model SiteContent {
+  id               String   @id @default("default")
+  displayName      String   @default("Your Space") @map("display_name")
+  chatName         String   @default("Companion") @map("chat_name")
+  chatAvatarUrl    String?  @map("chat_avatar_url")
+  heroEyebrow      String   @default("A PRIVATE SPACE FOR CONVERSATION") @map("hero_eyebrow")
+  heroTitle        String   @default("Good evening.") @map("hero_title")
+  heroSubtitle     String   @default("What’s on your mind?") @map("hero_subtitle")
+  heroDescription  String   @default("A space to think, talk, and be yourself.") @map("hero_description")
+  openingMessage   String   @default("Hi. I’m here to listen, think with you, and have a meaningful conversation.") @map("opening_message")
+  inputPlaceholder String   @default("Message…") @map("input_placeholder")
+  statusText       String   @default("Online") @map("status_text")
+  quickActions     String[] @default(["Talk about anything", "Get some advice", "Explore ideas", "Just chat"]) @map("quick_actions")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("site_content")
+}
+
+model SiteModule {
+  key         String   @id
+  label       String
+  description String
+  enabled     Boolean  @default(true)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([sortOrder])
+  @@map("site_modules")
+}
+
+model SystemSettings {
+  id                        String   @id @default("default")
+  defaultLanguage           String   @default("en") @map("default_language")
+  timezone                  String   @default("Asia/Kuala_Lumpur")
+  conversationSavingEnabled Boolean  @default(false) @map("conversation_saving_enabled")
+  conversationRetentionDays Int      @default(30) @map("conversation_retention_days")
+  maxMessageLength          Int      @default(4000) @map("max_message_length")
+  maintenanceMode           Boolean  @default(false) @map("maintenance_mode")
+  conversationStyle          String   @default("natural") @map("conversation_style")
+  emotionalResponse          String   @default("balanced") @map("emotional_response")
+  disagreementStyle          String   @default("natural") @map("disagreement_style")
+  responseLength             String   @default("adaptive") @map("response_length")
+  allowProfanity             Boolean  @default(true) @map("allow_profanity")
+  sensitiveAdviceMode        String   @default("cautious") @map("sensitive_advice_mode")
+  customBehaviorInstructions String   @default("") @map("custom_behavior_instructions")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
+model PersonalityProfile {
+  id                   String   @id @default(cuid())
+  name                 String
+  description          String   @default("")
+  tone                 String   @default("balanced")
+  empathy              Int      @default(70)
+  humor                 Int      @default(40)
+  formality             Int      @default(40)
+  replyLength           String   @default("medium") @map("reply_length")
+  behaviorInstructions String   @default("") @map("behavior_instructions")
+  active                Boolean  @default(false)
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@index([active])
+  @@map("personality_profiles")
+}
+
+model AiCharacter {
+  id          String   @id @default("default")
+  archetype   String   @default("robot")
+  headScale   Float    @default(1.0) @map("head_scale")
+  bodyScale   Float    @default(1.0) @map("body_scale")
+  armScale    Float    @default(1.0) @map("arm_scale")
+  legScale    Float    @default(1.0) @map("leg_scale")
+  primaryColor String  @default("#d8def0") @map("primary_color")
+  accentColor String   @default("#777cff") @map("accent_color")
+  antenna     Boolean  @default(true)
+  characterConfig Json? @map("character_config")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("ai_characters")
+}
+
+model VoiceSettings {
+  id                 String   @id @default("default")
+  enabled            Boolean  @default(false)
+  provider           String   @default("openvoice")
+  profileName        String   @default("Stanley Original") @map("profile_name")
+  referenceAudioUrl  String?  @map("reference_audio_url")
+  language           String   @default("auto")
+  supportedLanguages String[] @default(["en", "zh", "ms"]) @map("supported_languages")
+  speed              Float    @default(1.0)
+  autoSpeak          Boolean  @default(true) @map("auto_speak")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  references         VoiceReference[]
+
+  @@map("voice_settings")
+}
+
+model VoiceReference {
+  profileId    String        @default("default") @map("profile_id")
+  language     String
+  audioUrl     String        @map("audio_url")
+  originalName String        @map("original_name")
+  verified     Boolean       @default(false)
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  profile      VoiceSettings @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, language])
+  @@map("voice_references")
+}

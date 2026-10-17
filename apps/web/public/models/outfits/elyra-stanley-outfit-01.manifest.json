@@ -1,0 +1,63 @@
+{
+  "schema": "elyra.outfit.v1",
+  "id": "outfit-01",
+  "name": "套装 1",
+  "sourceFile": "elyra-stanley-outfit-01.vrm",
+  "sourceBytes": 11062436,
+  "clothToken": "_CLOTH",
+  "clothMaterials": [
+    {
+      "index": 11,
+      "name": "N00_007_01_Tops_01_CLOTH_01 (Instance)"
+    },
+    {
+      "index": 12,
+      "name": "N00_007_01_Tops_01_CLOTH_02 (Instance)"
+    },
+    {
+      "index": 13,
+      "name": "N00_001_01_Bottoms_01_CLOTH (Instance)"
+    },
+    {
+      "index": 14,
+      "name": "N00_002_01_Shoes_01_CLOTH (Instance)"
+    }
+  ],
+  "clothPrimitives": [
+    {
+      "meshIndex": 1,
+      "meshName": "Body (merged)",
+      "primitiveIndex": 4,
+      "materialIndex": 11,
+      "materialName": "N00_007_01_Tops_01_CLOTH_01 (Instance)"
+    },
+    {
+      "meshIndex": 1,
+      "meshName": "Body (merged)",
+      "primitiveIndex": 5,
+      "materialIndex": 12,
+      "materialName": "N00_007_01_Tops_01_CLOTH_02 (Instance)"
+    },
+    {
+      "meshIndex": 1,
+      "meshName": "Body (merged)",
+      "primitiveIndex": 6,
+      "materialIndex": 13,
+      "materialName": "N00_001_01_Bottoms_01_CLOTH (Instance)"
+    },
+    {
+      "meshIndex": 1,
+      "meshName": "Body (merged)",
+      "primitiveIndex": 7,
+      "materialIndex": 14,
+      "materialName": "N00_002_01_Shoes_01_CLOTH (Instance)"
+    }
+  ],
+  "skinJointCount": 133,
+  "strategy": {
+    "loadMode": "outfit-asset-only",
+    "atomicSwap": true,
+    "keepCurrentUntilReady": true,
+    "allowFullAvatarRuntimeFallback": false
+  }
+}

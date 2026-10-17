@@ -1,0 +1,14 @@
+CREATE TABLE "ai_characters" (
+  "id" TEXT NOT NULL DEFAULT 'default',
+  "archetype" TEXT NOT NULL DEFAULT 'robot',
+  "head_scale" DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+  "body_scale" DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+  "arm_scale" DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+  "leg_scale" DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+  "primary_color" TEXT NOT NULL DEFAULT '#d8def0',
+  "accent_color" TEXT NOT NULL DEFAULT '#777cff',
+  "antenna" BOOLEAN NOT NULL DEFAULT true,
+  "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "ai_characters_pkey" PRIMARY KEY ("id")
+);
