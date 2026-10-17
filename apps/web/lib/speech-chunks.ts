@@ -1,11 +1,11 @@
 // Prefer complete sentences, then clauses. Only split inside an unpunctuated
 // sentence as a last resort, with a bounded request size for first-audio latency.
-export function speechChunks(text:string):string[]{
+export function speechChunks(text:string,uniform=false):string[]{
   const chunks:string[]=[];
   let rest=text;
   while(rest.length){
-    const limit=chunks.length?100:40;
-    const hardLimit=chunks.length?180:100;
+    const limit=uniform?40:chunks.length?100:40;
+    const hardLimit=uniform?60:chunks.length?180:100;
     if(rest.length<=limit){chunks.push(rest);break;}
     const window=rest.slice(0,limit);
     const sentence=window.match(/[。！？!?\n]|\.(?=\s|$)/);

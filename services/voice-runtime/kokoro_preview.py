@@ -3,18 +3,23 @@ import json
 import sys
 import time
 import wave
+import os
 from pathlib import Path
 
 def main():
     import sherpa_onnx
     import soundfile as sf
-    root = Path(__file__).resolve().parent / 'models/kokoro-int8-multi-lang-v1_1'
+    models = Path(__file__).resolve().parent / 'models'
+    precision = os.environ.get('ELYRA_KOKORO_PRECISION', 'fp32')
+    if precision not in {'int8', 'fp32'}:
+        raise ValueError('Unsupported Kokoro precision')
+    root = models / ('kokoro-multi-lang-v1_1' if precision == 'fp32' else 'kokoro-int8-multi-lang-v1_1')
     config = sherpa_onnx.OfflineTtsConfig(model=sherpa_onnx.OfflineTtsModelConfig(
         kokoro=sherpa_onnx.OfflineTtsKokoroModelConfig(
-            model=str(root / 'model.int8.onnx'), voices=str(root / 'voices.bin'),
+            model=str(root / ('model.onnx' if precision == 'fp32' else 'model.int8.onnx')), voices=str(root / 'voices.bin'),
             tokens=str(root / 'tokens.txt'), data_dir=str(root / 'espeak-ng-data'),
             lexicon=','.join(str(root / name) for name in ['lexicon-us-en.txt', 'lexicon-zh.txt'])),
-        num_threads=4, provider='cpu'), max_num_sentences=1,
+        num_threads=int(os.environ.get('ELYRA_KOKORO_THREADS', '4')), provider='cpu'), max_num_sentences=1,
         rule_fsts=','.join(str(root / name) for name in ['phone-zh.fst', 'date-zh.fst', 'number-zh.fst']))
     if not config.validate():
         raise RuntimeError('Kokoro model configuration is incomplete')

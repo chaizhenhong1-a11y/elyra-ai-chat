@@ -1,5 +1,6 @@
 """Check local speaker 58 CPU latency before enabling the App preset."""
 import json
+import os
 import subprocess
 import sys
 import time
@@ -15,7 +16,8 @@ with (output / 'worker.log').open('w', encoding='utf-8') as log:
     try:
         ready = json.loads(worker.stdout.readline())
         assert ready.get('ready'), ready
-        results = {'loadSeconds': ready['loadSeconds'], 'speaker': 58, 'quantization': 'int8', 'results': []}
+        precision = os.environ.get('ELYRA_KOKORO_PRECISION', 'fp32')
+        results = {'loadSeconds': ready['loadSeconds'], 'speaker': 58, 'quantization': precision, 'results': []}
         for name, text in [('chinese', '今天过得怎么样？我在这里听你说。'),
                            ('english', 'How was your day? I am here to listen.'),
                            ('mixed', '你好，Stanley。How was your day?')]:
@@ -32,7 +34,8 @@ with (output / 'worker.log').open('w', encoding='utf-8') as log:
         print(json.dumps(results, ensure_ascii=False), flush=True)
         if max(item['requestSeconds'] for item in results['results']) > 10:
             raise RuntimeError('CPU latency is too high: do not activate automatically')
-        (root / 'models/kokoro-int8-multi-lang-v1_1/ready.json').write_text(json.dumps({'speaker': 58, 'tested': True}), encoding='utf-8')
+        model_name = 'kokoro-multi-lang-v1_1' if precision == 'fp32' else 'kokoro-int8-multi-lang-v1_1'
+        (root / 'models' / model_name / 'ready.json').write_text(json.dumps({'speaker': 58, 'tested': True}), encoding='utf-8')
     finally:
         worker.stdin.close()
         try:

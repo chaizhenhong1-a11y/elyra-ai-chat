@@ -44,8 +44,8 @@ export class KokoroPreviewService implements OnModuleInit,OnModuleDestroy{
   return this.startup;
  }
  presets(){
-  const ready=existsSync(this.python)&&existsSync(join(this.root,"models/kokoro-int8-multi-lang-v1_1/ready.json"))&&existsSync(join(this.root,`models/kokoro-int8-multi-lang-v1_1/model.int8.onnx`));
-  return [{id:KOKORO_PRESET,name:"Kokoro 58 · zm_009",language:"zh-CN",supportedLanguages:["zh","en"],provider:"kokoro",quality:"int8",sampleRate:24000,ready}];
+  const ready=existsSync(this.python)&&existsSync(join(this.root,"models/kokoro-multi-lang-v1_1/ready.json"))&&existsSync(join(this.root,`models/kokoro-multi-lang-v1_1/model.onnx`));
+  return [{id:KOKORO_PRESET,name:"Kokoro 58 · zm_009",language:"zh-CN",supportedLanguages:["zh","en"],provider:"kokoro",quality:"fp32",sampleRate:24000,ready}];
  }
  async preview(raw:unknown){
   const body=(raw??{}) as Record<string,unknown>;

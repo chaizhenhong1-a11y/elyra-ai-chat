@@ -95,18 +95,20 @@ export function CharacterConversation({
     const audio=playbackRef.current;
     const queue:string[]=[];
     let playing=false;
+    let playbackStarted=false;
+    let generationFinished=false;
+    const lookahead=voiceConfig.provider==="kokoro"?2:1;
     function pump(){
       if(cancelled||playing||!audio||!queue.length)return;
+      if(!playbackStarted&&!generationFinished&&queue.length<lookahead)return;
+      playbackStarted=true;
       playing=true;audio.src=queue.shift()!;
       void audio.play().catch(()=>{if(!cancelled)setSpeechBlocked(true);});
     }
     if(audio)audio.onended=()=>{playing=false;pump();};
-    // Kokoro CPU synthesis is slower than playback. Buffer a complete reply;
-    // Piper can continue generating the next sentence during playback.
-    const buffered=voiceConfig.provider==="kokoro";
+    // Both resident engines generate the next sentence during playback.
     void(async()=>{
-      const chunks=buffered&&speechText.length<=3000?[speechText]:speechChunks(speechText);
-      for(const text of chunks){
+      for(const text of speechChunks(speechText,voiceConfig.provider==="kokoro")){
         if(cancelled)break;
         const response=await fetch(`${voiceApi()}/voice/synthesize`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,replyText:speechText}),signal:abort.signal});
         if(!response.ok)throw new Error("Speech request failed");
@@ -114,9 +116,9 @@ export function CharacterConversation({
         if(cancelled)break;
         if(!result.audioUrl)break;
         queue.push(`${voiceApi().replace(/\/api\/v1$/,"")}${result.audioUrl}`);
-        if(!buffered)pump();
+        pump();
       }
-      if(buffered)pump();
+      generationFinished=true;pump();
     })().catch(()=>{if(!cancelled)setSpeechFailed(true);});
     return()=>{cancelled=true;abort.abort();if(audio){audio.pause();audio.onended=null;audio.removeAttribute("src");}queue.length=0;};
   },[speechText,readAloud,sending,voiceConfig.provider]);

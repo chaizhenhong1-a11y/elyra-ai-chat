@@ -18,11 +18,11 @@ async function main(){
  const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost:3000'});
  global.window=dom.window;global.document=dom.window.document;global.IS_REACT_ACT_ENVIRONMENT=true;
  Object.defineProperty(global,'navigator',{configurable:true,value:dom.window.navigator});
- let plays=0;let blocked=true;let provider='piper';const spoken=[];
+ let plays=0;let blocked=true;let provider='piper';let holdSpeech=false;const pendingSpeech=[];const spoken=[];
  dom.window.HTMLMediaElement.prototype.play=function(){plays++;return blocked?Promise.reject(new Error('autoplay blocked')):Promise.resolve();};
  dom.window.HTMLMediaElement.prototype.pause=function(){};
  global.fetch=async(url,options)=>{
-  if(url.endsWith('/voice/synthesize')){spoken.push(JSON.parse(options.body).text);return {ok:true,json:async()=>({audioUrl:'/api/v1/uploads/test.wav'})};}
+  if(url.endsWith('/voice/synthesize')){spoken.push(JSON.parse(options.body).text);if(holdSpeech)return new Promise(resolve=>pendingSpeech.push(resolve));return {ok:true,json:async()=>({audioUrl:'/api/v1/uploads/test.wav'})};}
   return {ok:true,json:async()=>({enabled:true,autoSpeak:true,provider,effectiveSupportedLanguages:['zh']})};
  };
  window.localStorage.setItem('elyra.uiLanguage','zh-CN');
@@ -46,6 +46,8 @@ async function main(){
  assert.equal(speechChunks(english)[0],'I understand how you feel.');
  assert.equal(speechChunks(english).join(''),english);
  assert.equal(speechChunks('字'.repeat(400)).join(''),'字'.repeat(400));
+ const uniform=speechChunks('字'.repeat(400),true);
+ assert.equal(uniform.join(''),'字'.repeat(400));assert.ok(uniform.every(chunk=>chunk.length<=60));
  await React.act(async()=>root.unmount());
  window.localStorage.setItem('elyra.voice.readAloud','false');
  const second=createRoot(host);await React.act(async()=>second.render(render()));
@@ -55,10 +57,18 @@ async function main(){
  await React.act(async()=>second.unmount());
  provider='kokoro';window.localStorage.setItem('elyra.voice.readAloud','true');
  const beforeBuffered=spoken.length;
+ const beforeBufferedPlays=plays;holdSpeech=true;
  const third=createRoot(host);await React.act(async()=>third.render(render()));
  await click(host.querySelector('.desktopStartChat'));
- assert.equal(spoken.length-beforeBuffered,1,'Kokoro requests the whole reply, avoiding synthesis gaps between sentences');
- assert.equal(spoken[beforeBuffered],messages['zh-CN'].openingMessage);
+ const speechResponse={ok:true,json:async()=>({audioUrl:'/api/v1/uploads/test.wav'})};
+ assert.equal(plays,beforeBufferedPlays,'does not play while generating');
+ await React.act(async()=>pendingSpeech.shift()(speechResponse));
+ assert.equal(plays,beforeBufferedPlays,'Kokoro waits for the second segment as lookahead');
+ holdSpeech=false;
+ await React.act(async()=>pendingSpeech.shift()(speechResponse));
+ assert.equal(plays,beforeBufferedPlays+1,'Kokoro starts once two segments are ready');
+ assert.ok(spoken.length-beforeBuffered>1,'fast FP32 Kokoro pipelines speech without waiting for the whole reply');
+ assert.equal(spoken.slice(beforeBuffered).join(''),messages['zh-CN'].openingMessage);
  assert.equal(host.querySelector('audio[controls]'),null);
  await React.act(async()=>third.unmount());
  dom.window.close();console.log('PASS short first chunk, lossless splitting, sequential playback, hidden player, autoplay retry, Admin default and explicit off.');

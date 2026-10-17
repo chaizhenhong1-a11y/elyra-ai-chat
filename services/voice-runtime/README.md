@@ -33,19 +33,23 @@ The trial uses the locally downloaded listening reference in `models/auditions/n
 ## Kokoro 58 preset
 
 `kokoro-zh-zm009` uses speaker ID 58 (`zm_009`) of Kokoro v1.1-zh,
-with the official sherpa-onnx INT8 distribution. Chinese and English replies
+with the official sherpa-onnx FP32 distribution. Chinese and English replies
 use the existing hidden App player. Unsupported detected languages stay silent.
 Short or ambiguous language identification is heuristic, not a guarantee.
 The App UI locale does not choose the speech language.
 
 The separate `models/kokoro-env` environment uses `requirements-kokoro.txt`.
-Download `kokoro-int8-multi-lang-v1_1.tar.bz2` from the official sherpa-onnx
-`tts-models` release into `models/`, then run `setup_kokoro.py` and
+Download `kokoro-multi-lang-v1_1.tar.bz2` from the official sherpa-onnx
+`tts-models` release into `models/`, then run `setup_kokoro.py --fp32` and
 `test_kokoro.py` with that environment's Python. The test records Chinese,
 English and mixed WAVs and latency in `models/kokoro-trials/results.json`.
 Only successful tests under the latency limit write the readiness marker.
 Admin → Voice offers both Kokoro 58 and the original Piper Chaowen preset.
 `ELYRA_KOKORO_PYTHON` overrides only the Kokoro interpreter.
+The FP32 graph is the default because measured INT8 inference was slower on
+the development CPU. `ELYRA_KOKORO_THREADS` overrides the four-thread default;
+`benchmark_kokoro.py` compares thread counts with an identical utterance.
+`ELYRA_KOKORO_PRECISION=int8` is available for isolated comparisons, not App activation.
 
 Model source: https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh
 Distribution: https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models
