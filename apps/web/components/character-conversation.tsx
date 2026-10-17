@@ -1,5 +1,7 @@
 "use client";
 
+// @refresh reset
+
 import {FormEvent,useEffect,useRef,useState} from "react";
 import type {SiteConfig} from "@/lib/site-config";
 import {CharacterStage,DesktopGlobalCharacterTools} from "./character-stage";
@@ -10,7 +12,7 @@ import {ConversationHistory,type HistoryMessage} from "./conversation-history";
 import {speechChunks} from "@/lib/speech-chunks";
 
 type Message=HistoryMessage;
-type VoicePublicConfig={enabled:boolean;autoSpeak:boolean;supportedLanguages:string[]};
+type VoicePublicConfig={enabled:boolean;autoSpeak:boolean;supportedLanguages:string[];provider?:string};
 const READ_ALOUD_KEY="elyra.voice.readAloud";
 function voiceApi(){if(typeof window==="undefined")return "http://localhost:4000/api/v1";return process.env.NEXT_PUBLIC_API_BASE_URL??`${window.location.protocol}//${window.location.hostname}:4000/api/v1`;}
 
@@ -57,7 +59,7 @@ export function CharacterConversation({
     fetch(`${voiceApi()}/voice`,{cache:"no-store"})
       .then(r=>r.ok?r.json():Promise.reject())
       .then((v:Partial<VoicePublicConfig>&{effectiveSupportedLanguages?:string[]})=>{
-        setVoiceConfig({enabled:v.enabled===true,autoSpeak:v.autoSpeak!==false,supportedLanguages:v.effectiveSupportedLanguages??(Array.isArray(v.supportedLanguages)?v.supportedLanguages:[])});
+        setVoiceConfig({enabled:v.enabled===true,autoSpeak:v.autoSpeak!==false,provider:v.provider,supportedLanguages:v.effectiveSupportedLanguages??(Array.isArray(v.supportedLanguages)?v.supportedLanguages:[])});
         // Respect an explicit user choice; otherwise inherit the active Admin preset.
         if(window.localStorage.getItem(READ_ALOUD_KEY)===null)setReadAloud(v.enabled===true&&v.autoSpeak!==false);
       })
@@ -99,20 +101,25 @@ export function CharacterConversation({
       void audio.play().catch(()=>{if(!cancelled)setSpeechBlocked(true);});
     }
     if(audio)audio.onended=()=>{playing=false;pump();};
-    // Generate the next sentence while the current sentence is being spoken.
+    // Kokoro CPU synthesis is slower than playback. Buffer a complete reply;
+    // Piper can continue generating the next sentence during playback.
+    const buffered=voiceConfig.provider==="kokoro";
     void(async()=>{
-      for(const text of speechChunks(speechText)){
+      const chunks=buffered&&speechText.length<=3000?[speechText]:speechChunks(speechText);
+      for(const text of chunks){
         if(cancelled)break;
         const response=await fetch(`${voiceApi()}/voice/synthesize`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text,replyText:speechText}),signal:abort.signal});
         if(!response.ok)throw new Error("Speech request failed");
         const result=await response.json() as {audioUrl?:string|null};
         if(cancelled)break;
         if(!result.audioUrl)break;
-        queue.push(`${voiceApi().replace(/\/api\/v1$/,"")}${result.audioUrl}`);pump();
+        queue.push(`${voiceApi().replace(/\/api\/v1$/,"")}${result.audioUrl}`);
+        if(!buffered)pump();
       }
+      if(buffered)pump();
     })().catch(()=>{if(!cancelled)setSpeechFailed(true);});
     return()=>{cancelled=true;abort.abort();if(audio){audio.pause();audio.onended=null;audio.removeAttribute("src");}queue.length=0;};
-  },[speechText,readAloud,sending]);
+  },[speechText,readAloud,sending,voiceConfig.provider]);
   const groupedLanguages=languagePickerGroups(languageQuery,locale);
 
   const supportedVoiceLanguages=voiceConfig.supportedLanguages.map(code=>{

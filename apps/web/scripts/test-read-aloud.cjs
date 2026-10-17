@@ -18,12 +18,12 @@ async function main(){
  const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost:3000'});
  global.window=dom.window;global.document=dom.window.document;global.IS_REACT_ACT_ENVIRONMENT=true;
  Object.defineProperty(global,'navigator',{configurable:true,value:dom.window.navigator});
- let plays=0;let blocked=true;const spoken=[];
+ let plays=0;let blocked=true;let provider='piper';const spoken=[];
  dom.window.HTMLMediaElement.prototype.play=function(){plays++;return blocked?Promise.reject(new Error('autoplay blocked')):Promise.resolve();};
  dom.window.HTMLMediaElement.prototype.pause=function(){};
  global.fetch=async(url,options)=>{
   if(url.endsWith('/voice/synthesize')){spoken.push(JSON.parse(options.body).text);return {ok:true,json:async()=>({audioUrl:'/api/v1/uploads/test.wav'})};}
-  return {ok:true,json:async()=>({enabled:true,autoSpeak:true,effectiveSupportedLanguages:['zh']})};
+  return {ok:true,json:async()=>({enabled:true,autoSpeak:true,provider,effectiveSupportedLanguages:['zh']})};
  };
  window.localStorage.setItem('elyra.uiLanguage','zh-CN');
  const host=document.getElementById('root');const root=createRoot(host);
@@ -53,6 +53,14 @@ async function main(){
  assert.equal(spoken.length,generated,'explicit off remains off despite Admin enabled');
  assert.equal(host.querySelector('audio').getAttribute('src'),null);
  await React.act(async()=>second.unmount());
+ provider='kokoro';window.localStorage.setItem('elyra.voice.readAloud','true');
+ const beforeBuffered=spoken.length;
+ const third=createRoot(host);await React.act(async()=>third.render(render()));
+ await click(host.querySelector('.desktopStartChat'));
+ assert.equal(spoken.length-beforeBuffered,1,'Kokoro requests the whole reply, avoiding synthesis gaps between sentences');
+ assert.equal(spoken[beforeBuffered],messages['zh-CN'].openingMessage);
+ assert.equal(host.querySelector('audio[controls]'),null);
+ await React.act(async()=>third.unmount());
  dom.window.close();console.log('PASS short first chunk, lossless splitting, sequential playback, hidden player, autoplay retry, Admin default and explicit off.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});
