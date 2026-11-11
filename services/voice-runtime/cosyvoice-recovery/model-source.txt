@@ -1,0 +1,5 @@
+﻿Model: FunAudioLLM/Fun-CosyVoice3-0.5B-2512
+URL: https://huggingface.co/FunAudioLLM/Fun-CosyVoice3-0.5B-2512
+Original model path: C:\project development\elyra\services\voice-runtime\models\cosyvoice3
+Original environment path: C:\project development\elyra\services\voice-runtime\models\cosyvoice-env
+Pinned revision: 29e01c4e8d000f4bcd70751be16fa94bf3d85a18
